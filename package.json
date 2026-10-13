@@ -1,0 +1,40 @@
+{
+  "name": "pomodoro-cute",
+  "productName": "Pomodoro Cute",
+  "version": "1.0.0",
+  "description": "A simple and cute Pomodoro timer desktop app with notifications and statistics",
+  "main": "src/core/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "node scripts/build-portable.cjs",
+    "test": "playwright test"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.pomodoro.cute",
+    "productName": "Pomodoro Cute",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/core/*",
+      "src/renderer/**/*",
+      "src/assets/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "src/assets/pomodoro.ico"
+    },
+    "portable": {
+      "artifactName": "Pomodoro Cute.exe"
+    }
+  }
+}

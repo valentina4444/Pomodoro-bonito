@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pomodoro Cute &mdash; Focus Timer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/styles.css" />
+</head>
+<body>
+  <main class="card">
+    <button class="btn-expand" id="btn-expand" aria-label="Expand window" title="Back to normal size" data-i18n-aria="timer.expandAria" data-i18n-title="timer.expandTitle">⤢</button>
+    <div class="mascot" id="mascot">🍅</div>
+    <h1 class="title"><span data-i18n="brand.short">Pomodoro</span><span class="title-accent">.</span></h1>
+    <p class="subtitle" id="mode-label">Time to focus!</p>
+
+    <div class="timer-ring" data-mode="work">
+      <svg viewBox="0 0 200 200">
+        <circle class="ring-track" cx="100" cy="100" r="88" />
+        <circle class="ring-progress" id="ring-progress" cx="100" cy="100" r="88" />
+      </svg>
+      <div class="timer-time">
+        <span id="time-display">25:00</span>
+        <span class="timer-mode" id="timer-mode">WORK</span>
+      </div>
+    </div>
+
+    <label class="focus-task" for="focus-task"><span data-i18n="task.workingOn">Working on</span>
+      <select id="focus-task"><option value="" data-i18n="task.unassigned">Unassigned focus</option></select>
+    </label>
+    <div class="controls">
+      <button class="btn btn-reset" id="btn-reset" aria-label="Reset" data-i18n-aria="timer.resetAria">↺</button>
+      <button class="btn btn-primary" id="btn-start">Start</button>
+      <button class="btn btn-skip" id="btn-skip" aria-label="Skip phase" data-i18n-aria="timer.skipAria">⏭</button>
+    </div>
+
+    <div class="sessions" id="sessions"></div>
+    <div class="cycle-dots" id="cycle-dots"></div>
+
+    <div class="utility-buttons">
+      <button class="utility-btn" id="btn-tasks" data-i18n="nav.tasks">📝 Tasks</button>
+      <button class="utility-btn" id="btn-journal" data-i18n="nav.journal">📖 Journal</button>
+      <button class="utility-btn" id="btn-settings" data-i18n="nav.settings">⚙ Settings</button>
+      <button class="utility-btn" id="btn-stats" data-i18n="nav.stats">📊 Stats</button>
+      <button class="utility-btn" id="btn-mini">⤢</button>
+    </div>
+
+    <footer class="footer" data-i18n="app.footer">Made with 💖 — take care of your eyes, one tomato at a time.</footer>
+  </main>
+
+  <!-- Settings modal -->
+  <div class="modal-overlay" id="settings-modal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2 data-i18n="settings.title">⚙ Settings</h2>
+        <button class="modal-close" id="close-settings" aria-label="Close" data-i18n-aria="common.close">×</button>
+      </div>
+      <div class="settings">
+        <div class="settings-row">
+          <label for="work-min" data-i18n="settings.work">Work (min)</label>
+          <input type="number" id="work-min" min="1" max="120" value="25" />
+        </div>
+        <div class="settings-row">
+          <label for="break-min" data-i18n="settings.break">Break (min)</label>
+          <input type="number" id="break-min" min="1" max="60" value="5" />
+        </div>
+        <div class="settings-row">
+          <label for="long-every" data-i18n="settings.longEvery">Long break every</label>
+          <input type="number" id="long-every" min="2" max="8" value="4" />
+        </div>
+        <div class="settings-row">
+          <label for="long-min" data-i18n="settings.longBreak">Long break (min)</label>
+          <input type="number" id="long-min" min="5" max="60" value="15" />
+        </div>
+        <div class="settings-row">
+          <label for="sound-toggle" data-i18n="settings.sound">Play sound</label>
+          <input type="checkbox" id="sound-toggle" checked />
+        </div>
+        <div class="settings-row">
+          <label for="notif-toggle" data-i18n="settings.notif">Notifications</label>
+          <input type="checkbox" id="notif-toggle" checked />
+        </div>
+        <div class="settings-row">
+          <label for="language-select" data-i18n="settings.language">Language</label>
+          <select id="language-select">
+            <option value="en">English</option>
+            <option value="es-MX">Español (México)</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <label data-i18n="settings.theme">Theme</label>
+          <div class="theme-picker" id="theme-picker"></div>
+        </div>
+        <div class="settings-row">
+          <label data-i18n="settings.appearance">Appearance</label>
+          <div class="theme-picker" id="mode-picker"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics modal -->
+  <div class="modal-overlay" id="stats-modal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2 data-i18n="stats.title">📊 Statistics</h2>
+        <button class="modal-close" id="close-stats" aria-label="Close" data-i18n-aria="common.close">×</button>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="daily" data-i18n="stats.daily">Daily</button>
+        <button class="tab-btn" data-tab="weekly" data-i18n="stats.weekly">Weekly</button>
+        <button class="tab-btn" data-tab="monthly" data-i18n="stats.monthly">Monthly</button>
+      </div>
+      <div class="chart-wrap" id="chart"></div>
+      <p class="chart-summary" id="chart-summary"></p>
+    </div>
+  </div>
+
+  <p id="tracker-error" class="tracker-error" role="alert" hidden></p>
+  <div class="modal-overlay" id="tasks-modal" hidden>
+    <section class="modal tracker-modal" role="dialog" aria-modal="true" aria-labelledby="tasks-heading">
+      <div class="modal-head"><h2 id="tasks-heading" data-i18n="tasks.title">📝 Tasks</h2><button class="modal-close" data-close="tasks-modal" aria-label="Close tasks" data-i18n-aria="tasks.closeAria">×</button></div>
+      <form id="quick-task" class="tracker-row"><input id="new-task-title" aria-label="New task title" data-i18n-aria="tasks.newAria" data-i18n-placeholder="tasks.newPlaceholder" placeholder="One small thing to do…" required maxlength="160"><button class="utility-btn" type="submit" data-i18n="tasks.add">Add</button></form>
+      <div class="board-tools"><input type="search" id="task-search" placeholder="Find a little task…" data-i18n-placeholder="tasks.searchPlaceholder" aria-label="Search tasks" data-i18n-aria="tasks.searchAria"><span data-i18n="tasks.dragHint">Drag a card to move it, or use its status menu.</span></div>
+      <div id="task-board" class="task-board"></div>
+    </section>
+  </div>
+  <div class="modal-overlay" id="task-modal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="task-heading">
+      <div class="modal-head"><h2 id="task-heading" data-i18n="task.details">Task details</h2><button class="modal-close" data-close="task-modal" aria-label="Close task details" data-i18n-aria="task.closeAria">×</button></div>
+      <form id="task-form" class="tracker-form">
+        <label><span data-i18n="task.title">Title</span><input id="task-title" required maxlength="160"></label>
+        <label><span data-i18n="task.description">Description</span> <small data-i18n="task.optional">(optional)</small><textarea id="task-description" maxlength="4000" rows="3"></textarea></label>
+        <label><span data-i18n="task.status">Status</span><select id="task-status"><option value="todo" data-i18n="status.todo">To Do</option><option value="in_progress" data-i18n="status.inProgress">In Progress</option><option value="completed" data-i18n="status.completed">Completed</option></select></label>
+        <button class="utility-btn" type="submit" data-i18n="task.save">Save task</button>
+      </form>
+      <p id="task-progress" class="tracker-summary"></p><div id="task-history"></div>
+      <button class="utility-btn" id="delete-task" data-i18n="task.delete">Delete task</button><small class="delete-hint" data-i18n="task.deleteHint">Session history is kept.</small>
+    </section>
+  </div>
+  <div class="modal-overlay" id="completion-modal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="completion-heading">
+      <div class="modal-head"><h2 id="completion-heading" data-i18n="completion.title">🍅 A little progress!</h2><button class="modal-close" data-close="completion-modal" aria-label="Save and continue" data-i18n-aria="completion.closeAria">×</button></div>
+      <p class="tracker-summary" data-i18n="completion.summary">Your focus session is saved. Add a note, or simply continue.</p>
+      <form id="completion-form" class="tracker-form">
+        <label><span data-i18n="completion.workedOn">Worked on</span><select id="completion-task"></select></label>
+        <label><span data-i18n="completion.what">What did you accomplish?</span> <small data-i18n="task.optional">(optional)</small><textarea id="session-notes" maxlength="8000" rows="4" placeholder="A small step is still a step 🌱" data-i18n-placeholder="completion.notesPlaceholder"></textarea></label>
+        <label class="tracker-check"><input type="checkbox" id="complete-task"><span data-i18n="completion.markDone">Mark this task as completed</span></label>
+        <button class="btn btn-primary" type="submit" data-i18n="completion.save">Save & continue</button>
+      </form>
+    </section>
+  </div>
+  <div class="modal-overlay" id="journal-modal" hidden>
+    <section class="modal tracker-modal" role="dialog" aria-modal="true" aria-labelledby="journal-heading">
+      <div class="modal-head"><h2 id="journal-heading" data-i18n="journal.title">📖 Work journal</h2><button class="modal-close" data-close="journal-modal" aria-label="Close journal" data-i18n-aria="journal.closeAria">×</button></div>
+      <div class="tracker-row journal-tabs" role="group" aria-label="Journal period" data-i18n-aria="journal.periodAria"><button class="utility-btn" data-period="day" data-i18n="journal.day">Day</button><button class="utility-btn" data-period="week" data-i18n="journal.week">Week</button><button class="utility-btn" data-period="month" data-i18n="journal.month">Month</button></div>
+      <div class="tracker-row date-navigation"><button class="utility-btn" id="journal-prev" aria-label="Previous period" data-i18n-aria="journal.prevAria">‹</button><input type="date" id="journal-date" aria-label="Journal date" data-i18n-aria="journal.dateAria"><button class="utility-btn" id="journal-next" aria-label="Next period" data-i18n-aria="journal.nextAria">›</button><button class="utility-btn" id="journal-today" data-i18n="journal.today">Today</button></div>
+      <p id="journal-summary" class="tracker-summary" aria-live="polite"></p><div id="journal-entries"></div>
+      <details class="export-panel"><summary data-i18n="journal.exportSummary">Export journal</summary>
+        <div class="tracker-form">
+          <label><span data-i18n="journal.period">Period</span><select id="export-period"><option value="day" data-i18n="journal.daySelected">Selected day</option><option value="week" data-i18n="journal.weekSelected">Selected week</option><option value="month" data-i18n="journal.monthSelected">Selected month</option><option value="custom" data-i18n="journal.customDates">Custom dates</option><option value="all" data-i18n="journal.allHistory">All history</option></select></label>
+          <div id="export-custom" class="tracker-row" hidden><label><span data-i18n="journal.from">From</span><input type="date" id="export-start"></label><label><span data-i18n="journal.through">Through</span><input type="date" id="export-end"></label></div>
+          <label><span data-i18n="journal.format">Format</span><select id="export-format"><option value="md">Markdown</option><option value="csv">CSV</option><option value="json">JSON</option></select></label>
+          <button class="utility-btn" id="export-journal" data-i18n="journal.export">Export</button><p id="export-result" role="status"></p>
+        </div>
+      </details>
+    </section>
+  </div>
+  <script src="i18n/i18n.js"></script>
+  <script src="i18n/phrases.js"></script>
+  <script src="tracker/work-tracker.js"></script>
+  <script src="tracker/tracker-ui.js"></script>
+  <script src="timer/script.js"></script>
+  <script src="timer/desktop-ui.js"></script>
+</body>
+</html>
