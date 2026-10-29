@@ -24,7 +24,7 @@
 
   function validate(value) {
     if (!value || value.version !== 1 || !Array.isArray(value.tasks) || !Array.isArray(value.sessions) ||
-      !value.tasks.every(t => t && typeof t.id === "string" && typeof t.title === "string" && typeof t.description === "string" && Object.hasOwn(statuses, t.status) && validDate(t.createdAt) && (t.completedAt === null || validDate(t.completedAt))) ||
+      !value.tasks.every(t => t && typeof t.id === "string" && typeof t.title === "string" && typeof t.description === "string" && Number.isInteger(t.priority) && t.priority >= 1 && t.priority <= 5 && Object.hasOwn(statuses, t.status) && validDate(t.createdAt) && (t.completedAt === null || validDate(t.completedAt))) ||
       !value.sessions.every(s => s && typeof s.id === "string" && (s.taskId === null || typeof s.taskId === "string") && typeof s.taskTitle === "string" && validDate(s.startedAt) && validDate(s.completedAt) && Number.isFinite(s.duration) && s.duration > 0 && typeof s.notes === "string" && typeof s.taskCompleted === "boolean") ||
       new Set(value.tasks.map(t => t.id)).size !== value.tasks.length || new Set(value.sessions.map(s => s.id)).size !== value.sessions.length ||
       (value.pendingSessionId !== null && !value.sessions.some(s => s.id === value.pendingSessionId))) {
@@ -49,7 +49,11 @@
 
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) data = validate(JSON.parse(raw));
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved && saved.version === 1 && Array.isArray(saved.tasks)) saved.tasks = saved.tasks.map(task => ({ priority: 3, ...task }));
+      data = validate(saved);
+    }
     else {
       const legacy = JSON.parse(localStorage.getItem("pomodoro_history") || "[]");
       if (!Array.isArray(legacy)) throw fail("tracker.invalidLegacy");
@@ -82,17 +86,19 @@
     task.status = status;
   }
 
-  function saveTask(taskId, title, description, status) {
+  function saveTask(taskId, title, description, status, priority = 3) {
     title = title.trim();
     if (!title || title.length > 160 || description.length > 4000) throw fail("tracker.titleRules");
+    priority = Number(priority);
+    if (!Number.isInteger(priority) || priority < 1 || priority > 5) throw fail("tracker.invalidPriority");
     return mutate(next => {
       let task = next.tasks.find(t => t.id === taskId);
       if (taskId && !task) throw fail("tracker.taskMissing");
       if (!task) {
-        task = { id: id(), title, description, status: "todo", createdAt: new Date().toISOString(), completedAt: null };
+        task = { id: id(), title, description, priority, status: "todo", createdAt: new Date().toISOString(), completedAt: null };
         next.tasks.push(task);
       }
-      Object.assign(task, { title, description });
+      Object.assign(task, { title, description, priority });
       setStatus(task, status);
       return task.id;
     });
@@ -147,8 +153,17 @@
   const time = iso => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const minutes = duration => Math.round(duration / 60 * 100) / 100;
   const md = value => String(value).replace(/[\\`*_{}\[\]<>#|!]/g, "\\$&");
+  function taskDictionary(list) {
+    const ids = [...new Set(list.map(s => s.taskId).filter(Boolean))];
+    return ids.map(taskId => {
+      const task = data.tasks.find(t => t.id === taskId);
+      const session = list.find(s => s.taskId === taskId);
+      return { id: taskId, title: task?.title || session?.taskTitle || tr("export.unassigned"), description: task?.description || "" };
+    });
+  }
   function exportText(format, list) {
-    if (format === "json") return JSON.stringify(list, null, 2);
+    const dictionary = taskDictionary(list);
+    if (format === "json") return JSON.stringify({ sessions: list, taskDictionary: dictionary }, null, 2);
     if (format === "csv") {
       const quote = v => {
         let text = String(v ?? "");
@@ -157,6 +172,10 @@
       };
       const rows = [[tr("export.date"), tr("export.start"), tr("export.end"), tr("export.startIso"), tr("export.endIso"), tr("export.task"), tr("export.taskId"), tr("export.focusMinutes"), tr("export.notes"), tr("export.taskCompleted"), tr("export.sessionId")]];
       list.forEach(s => rows.push([dateKey(s.completedAt), time(s.startedAt), time(s.completedAt), s.startedAt, s.completedAt, s.taskTitle || tr("export.unassigned"), s.taskId, minutes(s.duration), s.notes, s.taskCompleted ? tr("export.yes") : tr("export.no"), s.id]));
+      rows.push([]);
+      rows.push([tr("export.dictionary")]);
+      rows.push([tr("export.task"), tr("export.taskId"), tr("task.description")]);
+      dictionary.forEach(task => rows.push([task.title, task.id, task.description]));
       return "\uFEFF" + rows.map(row => row.map(quote).join(",")).join("\r\n");
     }
     let output = `# ${tr("export.header")}\n\n${i18n.count("unit.session", list.length)} · ${tr("unit.minFocus", { n: minutes(list.reduce((n, s) => n + s.duration, 0)) })}\n`;
@@ -174,6 +193,8 @@
         });
       });
     });
+    output += "\n## " + tr("export.dictionary") + "\n";
+    dictionary.forEach(task => { output += "\n### " + task.title + "\n\n- " + tr("export.taskId") + ": " + task.id + "\n- " + tr("task.description") + ": " + (task.description || "—") + "\n"; });
     return output;
   }
 

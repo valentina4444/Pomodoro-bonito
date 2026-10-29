@@ -518,6 +518,39 @@ test("task workflow, journal, history snapshots, and native exports persist afte
   });
 });
 
+test("priority selector fits its labels and colors options like task markers", async () => {
+  await withApp(null, async ({ page }) => {
+    await page.click("#btn-tasks");
+    const styles = await page.evaluate(() => {
+      const selector = document.querySelector("#new-task-priority");
+      const workspace = document.querySelector(".workspace");
+      const selectorStyle = getComputedStyle(selector);
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      context.font = selectorStyle.font;
+      const longestLabelWidth = Math.max(...[...selector.options].map(option => context.measureText(option.textContent).width));
+      const horizontalPadding = parseFloat(selectorStyle.paddingLeft) + parseFloat(selectorStyle.paddingRight);
+      const result = { width: selector.getBoundingClientRect().width, minimumWidth: longestLabelWidth + horizontalPadding, flexShrink: selectorStyle.flexShrink, colors: [] };
+      for (const option of selector.options) {
+        const marker = document.createElement("article");
+        marker.className = "task-card";
+        marker.dataset.priority = option.value;
+        workspace.append(marker);
+        result.colors.push({
+          option: getComputedStyle(option).color,
+          marker: getComputedStyle(marker).borderLeftColor,
+        });
+        marker.remove();
+      }
+      return result;
+    });
+
+    expect(styles.width).toBeGreaterThanOrEqual(styles.minimumWidth);
+    expect(styles.flexShrink).toBe("0");
+    expect(styles.colors.every(({ option, marker }) => option === marker)).toBe(true);
+  });
+});
+
 test("unassigned completion is saved before notes and recovered exactly once", async () => {
   const userData = makeUserDataDir();
   await withApp(userData, async ({ page }) => {

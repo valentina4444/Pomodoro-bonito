@@ -53,12 +53,31 @@
     const card = node("article", undefined, "journal-entry");
     card.append(node("h4", session.taskTitle || tr("task.unassigned")));
     card.append(node("small", `${store.dateKey(session.startedAt)} ${store.time(session.startedAt)} → ${store.time(session.completedAt)} · ${tr("unit.minFocus", { n: store.minutes(session.duration) })}`));
-    if (session.notes) card.append(node("p", session.notes));
+    if (session.notes) { const notes = node("p"); appendLinkedText(notes, session.notes); card.append(notes); }
     if (session.taskCompleted) card.append(node("p", tr("tracker.completedInSession")));
     const edit = node("button", tr("tracker.editNotes"), "utility-btn");
     edit.addEventListener("click", () => showCompletion(session.id));
     card.append(edit);
     return card;
+  }
+  function appendLinkedText(container, text) {
+    const pattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|file:\/\/\/[^\s)]+)\)/gi;
+    let cursor = 0, match;
+    while ((match = pattern.exec(text))) {
+      if (match.index > cursor) container.append(document.createTextNode(text.slice(cursor, match.index)));
+      const link = node("a", match[1]); link.href = "#"; link.className = "tracker-link";
+      link.addEventListener("click", async event => { event.preventDefault(); const result = await window.pomodoroLinks?.open(match[2]); if (result?.error) error(result.error); });
+      container.append(link); cursor = pattern.lastIndex;
+    }
+    if (cursor < text.length) container.append(document.createTextNode(text.slice(cursor)));
+  }
+  function completedInRange(task, filter) {
+    if (filter === "all") return true;
+    if (!task.completedAt) return false;
+    const completed = store.dateKey(task.completedAt), today = store.dateKey();
+    if (filter === "today") return completed === today;
+    const bounds = store.range(filter, today);
+    return completed >= bounds.start && completed <= bounds.end;
   }
   function renderBoard() {
     const { tasks } = store.getData();
@@ -69,7 +88,9 @@
       const name = labels[status];
       const column = node("section", undefined, "task-column");
       column.dataset.status = status;
-      const matching = tasks.filter(t => t.status === status && (!query || `${t.title} ${t.description}`.toLocaleLowerCase().includes(query)));
+      let matching = tasks.filter(t => t.status === status && (!query || (t.title + " " + t.description).toLocaleLowerCase().includes(query)) && (status !== "completed" || completedInRange(t, $("completed-filter").value)));
+      const sort = $("task-sort").value;
+      matching.sort((a, b) => sort === "priority" ? b.priority - a.priority || a.title.localeCompare(b.title) : sort === "alphabetical" ? a.title.localeCompare(b.title) : a.createdAt.localeCompare(b.createdAt));
       column.append(node("h3", `${name} · ${matching.length}`));
       if (!matching.length) column.append(node("p", query ? tr("tracker.noMatch") : tr("tracker.emptyColumn"), "tracker-empty"));
       column.addEventListener("dragover", e => { if (e.dataTransfer.types.includes("text/plain")) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; column.classList.add("drop-target"); } });
@@ -82,6 +103,7 @@
       matching.forEach(task => {
         const card = node("article", undefined, "task-card");
         card.dataset.taskId = task.id;
+        card.dataset.priority = task.priority || 3;
         card.draggable = true;
         const grip = node("span", "⠿", "card-grip");
         grip.draggable = true; grip.title = tr("tracker.dragTitle");
@@ -92,6 +114,7 @@
         const title = node("button", task.title, "task-title");
         title.addEventListener("click", () => showTask(task.id));
         card.append(title, node("p", summary(task.id)));
+        if (task.description) { const description = node("p", undefined, "task-description-preview"); appendLinkedText(description, task.description); card.append(description); }
         const statusPicker = node("select");
         statusPicker.setAttribute("aria-label", tr("tracker.statusFor", { title: task.title }));
         Object.keys(store.statuses).forEach(value => statusPicker.add(new Option(labels[value], value)));
@@ -122,6 +145,7 @@
     editTaskId = taskId;
     $("task-title").value = task.title;
     $("task-description").value = task.description;
+    $("task-priority").value = task.priority || 3;
     $("task-status").value = task.status;
     $("task-progress").textContent = progressText(task);
     $("task-history").replaceChildren(...store.getData().sessions.filter(s => s.taskId === taskId).reverse().map(sessionCard));
@@ -212,12 +236,14 @@
   $("btn-journal").addEventListener("click", () => { renderJournal(); open("journal-modal"); });
   $("quick-task").addEventListener("submit", e => {
     e.preventDefault();
-    if (attempt(() => store.saveTask(null, $("new-task-title").value, "", "todo"))) { $("new-task-title").value = ""; $("task-search").value = ""; renderBoard(); $("new-task-title").focus(); }
+    if (attempt(() => store.saveTask(null, $("new-task-title").value, "", "todo", $("new-task-priority").value))) { $("new-task-title").value = ""; $("task-search").value = ""; renderBoard(); $("new-task-title").focus(); }
   });
   $("task-search").addEventListener("input", renderBoard);
+  $("task-sort").addEventListener("change", renderBoard);
+  $("completed-filter").addEventListener("change", renderBoard);
   $("task-form").addEventListener("submit", e => {
     e.preventDefault();
-    if (attempt(() => store.saveTask(editTaskId, $("task-title").value, $("task-description").value, $("task-status").value))) close("task-modal");
+    if (attempt(() => store.saveTask(editTaskId, $("task-title").value, $("task-description").value, $("task-status").value, $("task-priority").value))) close("task-modal");
   });
   $("delete-task").addEventListener("click", () => {
     if (attempt(() => { store.deleteTask(editTaskId); return true; })) close("task-modal");

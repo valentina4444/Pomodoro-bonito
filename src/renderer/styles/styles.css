@@ -12,6 +12,11 @@
   --ink-soft: #9d8585;
   --muted: #c8adad;
   --white: #fffdfa;
+  --priority-1: #527b61;
+  --priority-2: #3f8170;
+  --priority-3: #5679a6;
+  --priority-4: #a76b3d;
+  --priority-5: #a84f62;
 }
 
 :root[data-theme="mint"] {
@@ -801,6 +806,22 @@ button { -webkit-app-region: no-drag; }
 .board-tools { display: flex; gap: 15px; align-items: center; margin: 4px 0 20px; }
 .board-tools input { max-width: 250px; font-size: 12px; }
 .board-tools span { color: var(--ink-soft); font-size: 10px; line-height: 1.6; }
+.board-tools label { display: flex; align-items: center; gap: 50px; font-size: 11px; color: var(--ink-soft); }
+.board-tools select, #new-task-priority { padding: 7px; font-size: 11px; }
+#new-task-priority { flex: 0 0 auto; width: max-content; }
+#new-task-priority option[value="1"], #task-priority option[value="1"] { color: var(--priority-1); }
+#new-task-priority option[value="2"], #task-priority option[value="2"] { color: var(--priority-2); }
+#new-task-priority option[value="3"], #task-priority option[value="3"] { color: var(--priority-3); }
+#new-task-priority option[value="4"], #task-priority option[value="4"] { color: var(--priority-4); }
+#new-task-priority option[value="5"], #task-priority option[value="5"] { color: var(--priority-5); }
+.workspace .task-card[data-priority="1"] { border-left: 4px solid var(--priority-1); }
+.workspace .task-card[data-priority="2"] { border-left: 4px solid var(--priority-2); }
+.workspace .task-card[data-priority="3"] { border-left: 4px solid var(--priority-3); }
+.workspace .task-card[data-priority="4"] { border-left: 4px solid var(--priority-4); }
+.workspace .task-card[data-priority="5"] { border-left: 4px solid var(--priority-5); }
+.task-description-preview { white-space: pre-wrap; }
+.tracker-link { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 2px; }
+.tracker-link:hover { color: var(--accent); }
 .workspace .task-column.drop-target { outline: 2px dashed var(--accent); outline-offset: -3px; }
 .task-card.dragging { opacity: .45; }
 .task-card { position: relative; }

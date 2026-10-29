@@ -8,6 +8,7 @@ const {
   nativeImage,
   nativeTheme,
   dialog,
+  shell,
   screen,
   session,
 } = require("electron");
@@ -254,6 +255,25 @@ ipcMain.handle("export-journal", async (event, payload) => {
     await fs.promises.writeFile(result.filePath, payload.content, "utf8");
     return { canceled: false };
   } catch { return { error: tr("export.writeError") }; }
+});
+
+ipcMain.handle("open-task-link", async (_event, value) => {
+  if (typeof value !== "string" || value.length > 4096) return { error: "Invalid link." };
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      await shell.openExternal(url.href);
+      return { opened: true };
+    }
+    if (url.protocol === "file:" && !url.host && !url.search && !url.hash) {
+      const { fileURLToPath } = require("node:url");
+      const error = await shell.openPath(fileURLToPath(url));
+      return error ? { error } : { opened: true };
+    }
+    return { error: "Only web pages and local files can be opened." };
+  } catch {
+    return { error: "This link could not be opened." };
+  }
 });
 
 function focusExistingWindow() {
