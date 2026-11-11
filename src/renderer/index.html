@@ -122,8 +122,8 @@
   <div class="modal-overlay" id="tasks-modal" hidden>
     <section class="modal tracker-modal" role="dialog" aria-modal="true" aria-labelledby="tasks-heading">
       <div class="modal-head"><h2 id="tasks-heading" data-i18n="tasks.title">📝 Tasks</h2><button class="modal-close" data-close="tasks-modal" aria-label="Close tasks" data-i18n-aria="tasks.closeAria">×</button></div>
-      <form id="quick-task" class="tracker-row"><input id="new-task-title" aria-label="New task title" data-i18n-aria="tasks.newAria" data-i18n-placeholder="tasks.newPlaceholder" placeholder="One small thing to do…" required maxlength="160"><button class="utility-btn" type="submit" data-i18n="tasks.add">Add</button></form>
-      <div class="board-tools"><input type="search" id="task-search" placeholder="Find a little task…" data-i18n-placeholder="tasks.searchPlaceholder" aria-label="Search tasks" data-i18n-aria="tasks.searchAria"><span data-i18n="tasks.dragHint">Drag a card to move it, or use its status menu.</span></div>
+      <form id="quick-task" class="tracker-row"><input id="new-task-title" aria-label="New task title" data-i18n-aria="tasks.newAria" data-i18n-placeholder="tasks.newPlaceholder" placeholder="One small thing to do…" required maxlength="160"><select id="new-task-priority" aria-label="Priority" data-i18n-aria="task.priority"><option value="1" data-i18n="priority.1">Very low</option><option value="2" data-i18n="priority.2">Low</option><option value="3" selected data-i18n="priority.3">Medium</option><option value="4" data-i18n="priority.4">High</option><option value="5" data-i18n="priority.5">Urgent</option></select><button class="utility-btn" type="submit" data-i18n="tasks.add">Add</button></form>
+      <div class="board-tools"><input type="search" id="task-search" placeholder="Find a little task…" data-i18n-placeholder="tasks.searchPlaceholder" aria-label="Search tasks" data-i18n-aria="tasks.searchAria"><label><span data-i18n="tasks.sort">Sort</span><select id="task-sort" aria-label="Sort tasks" data-i18n-aria="tasks.sort"><option value="created" data-i18n="tasks.sortCreated">Created</option><option value="priority" data-i18n="tasks.sortPriority">Priority</option><option value="alphabetical" data-i18n="tasks.sortAlphabetical">Alphabetical</option></select></label><label><span data-i18n="tasks.completedFilter">Completed</span><select id="completed-filter" aria-label="Completed task date range" data-i18n-aria="tasks.completedFilter"><option value="all" data-i18n="tasks.all">All</option><option value="today" data-i18n="tasks.today">Today</option><option value="week" data-i18n="tasks.thisWeek">This week</option><option value="month" data-i18n="tasks.thisMonth">This month</option></select></label><span data-i18n="tasks.dragHint">Drag a card to move it, or use its status menu.</span></div>
       <div id="task-board" class="task-board"></div>
     </section>
   </div>
@@ -133,6 +133,8 @@
       <form id="task-form" class="tracker-form">
         <label><span data-i18n="task.title">Title</span><input id="task-title" required maxlength="160"></label>
         <label><span data-i18n="task.description">Description</span> <small data-i18n="task.optional">(optional)</small><textarea id="task-description" maxlength="4000" rows="3"></textarea></label>
+        <small data-i18n="links.syntax">Links: [short label](https://… or file:///…)</small>
+        <label><span data-i18n="task.priority">Priority</span><select id="task-priority"><option value="1" data-i18n="priority.1">Very low</option><option value="2" data-i18n="priority.2">Low</option><option value="3" data-i18n="priority.3">Medium</option><option value="4" data-i18n="priority.4">High</option><option value="5" data-i18n="priority.5">Urgent</option></select></label>
         <label><span data-i18n="task.status">Status</span><select id="task-status"><option value="todo" data-i18n="status.todo">To Do</option><option value="in_progress" data-i18n="status.inProgress">In Progress</option><option value="completed" data-i18n="status.completed">Completed</option></select></label>
         <button class="utility-btn" type="submit" data-i18n="task.save">Save task</button>
       </form>
@@ -147,6 +149,7 @@
       <form id="completion-form" class="tracker-form">
         <label><span data-i18n="completion.workedOn">Worked on</span><select id="completion-task"></select></label>
         <label><span data-i18n="completion.what">What did you accomplish?</span> <small data-i18n="task.optional">(optional)</small><textarea id="session-notes" maxlength="8000" rows="4" placeholder="A small step is still a step 🌱" data-i18n-placeholder="completion.notesPlaceholder"></textarea></label>
+        <small data-i18n="links.syntax">Links: [short label](https://… or file:///…)</small>
         <label class="tracker-check"><input type="checkbox" id="complete-task"><span data-i18n="completion.markDone">Mark this task as completed</span></label>
         <button class="btn btn-primary" type="submit" data-i18n="completion.save">Save & continue</button>
       </form>

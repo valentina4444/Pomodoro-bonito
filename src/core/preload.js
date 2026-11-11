@@ -3,6 +3,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("pomodoroExport", {
   save: payload => ipcRenderer.invoke("export-journal", payload),
 });
+contextBridge.exposeInMainWorld("pomodoroLinks", {
+  open: url => ipcRenderer.invoke("open-task-link", url),
+});
 
 contextBridge.exposeInMainWorld("pomodoroNotification", {
   show: (title, body) => ipcRenderer.send("notify", { title, body }),
